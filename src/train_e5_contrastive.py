@@ -240,15 +240,13 @@ def main(cfg: DictConfig) -> None:
 
     model.fit(
         train_objectives=[(train_dataloader, train_loss)],
-        evaluator=val_evaluator,
+        evaluator=[val_evaluator],  # 传递evaluator列表
         epochs=cfg.train.num_epochs,
         evaluation_steps=len(train_dataloader),  # Evaluate after each epoch
         warmup_steps=warmup_steps,
         output_path=output_path,
         show_progress_bar=True,
         save_best_model=True,  # Save best model based on evaluator return value (MRR)
-        checkpoint_save_steps=500,  # Also save periodic checkpoints
-        checkpoint_save_total_limit=3,  # Keep only 3 most recent checkpoints
     )
 
     print(f"\nTraining finished. Model saved to {output_path}")
