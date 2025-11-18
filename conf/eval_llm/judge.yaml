@@ -1,0 +1,9 @@
+num_queries: 200
+top_k: 10
+
+llm:
+  api_url: "https://api.nuwaapi.com/v1/chat/completions"
+  api_key: ${env:NUWA_API_KEY,""}
+  model: ""  # fill with your deployed model name
+  temperature: 0.7
+  max_tokens: 256
