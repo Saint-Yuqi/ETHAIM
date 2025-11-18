@@ -1,0 +1,2 @@
+[2025-11-18 14:28:11,642][sentence_transformers.SentenceTransformer][INFO] - Use pytorch device_name: cuda:0
+[2025-11-18 14:28:11,643][sentence_transformers.SentenceTransformer][INFO] - Load pretrained SentenceTransformer: intfloat/multilingual-e5-base

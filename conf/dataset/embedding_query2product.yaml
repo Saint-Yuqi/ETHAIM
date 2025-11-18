@@ -1,0 +1,43 @@
+name: embedding_query2product
+path: ${paths.embedding_data}
+
+fields:
+  language: "PageLanguage"
+  query: "OriginalQuery"
+  product_name: "ProductName"
+  product_type: "ProductType"
+  product_type_id: "ProductTypeId"
+  level1_group: "Level1_ProductGroup"
+  level4_group: "Level4_ProductGroup"
+  brand: "BrandName"
+  impressions: "UniqueImpressions"
+  selects: "UniqueSelects"
+
+sampling:
+  min_selects: 1
+  min_impressions: 1
+  max_rows: ~  # 使用全部过滤后的数据（773万行）
+
+split:
+  method: "predefined"  # "random" or "predefined"
+  eval_ratio: 0.1       # Only used when method="random"
+
+  # Predefined split ratios (when method="predefined")
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+
+  # Frequency band configuration for query-level stratification
+  frequency_bands:
+    head_ratio: 0.1    # Top 10% queries by total selects
+    tail_ratio: 0.6    # Bottom 60% queries (mid = 30%)
+
+  # Split options
+  stratify_by_language: true
+  output_dir: ${paths.data_splits}
+
+batching:
+  train_batch_size: 384    # 从256增加到384，约50%增加
+  eval_batch_size: 512     # 评估时可以用更大的batch
+  max_query_length: 32     # query通常较短，保持32
+  max_product_length: 64    # product描述保持64

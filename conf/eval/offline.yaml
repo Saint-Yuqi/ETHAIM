@@ -1,0 +1,5 @@
+max_queries: 1000
+max_products_per_query: 50
+
+metrics:
+  hit_k: 10

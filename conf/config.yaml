@@ -1,0 +1,13 @@
+defaults:
+  - dataset: embedding_query2product
+  - model: e5_base
+  - train: base
+  - eval: offline
+  - _self_
+
+seed: 42
+
+paths:
+  embedding_data: /home/c/yuqyan/code/ETHAIM/ETHAIM/embedding_query2product.parquet
+  data_splits: ./data/splits
+  output_dir: ./models

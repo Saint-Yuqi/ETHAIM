@@ -1,0 +1,10 @@
+num_epochs: 2  # 从1增加到2，但通常2-3个epochs就够了
+warmup_ratio: 0.1
+num_workers: 16  # 128核心系统，设置16个workers 
+device: "cuda"
+
+output:
+  dir: ${paths.output_dir}/e5-finetuned-v1
+
+logging:
+  log_every_steps: 100

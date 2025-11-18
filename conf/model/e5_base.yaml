@@ -1,0 +1,7 @@
+name: multilingual_e5_base
+base_model_name: "intfloat/multilingual-e5-base"
+pooling: "mean"
+projection_dim: 768
+use_prefix:
+  query: "query: "
+  product: "passage: "
