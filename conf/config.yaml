@@ -3,6 +3,7 @@ defaults:
   - model: e5_base
   - train: base
   - eval: offline
+  - eval_llm: judge
   - _self_
 
 seed: 42
@@ -10,4 +11,5 @@ seed: 42
 paths:
   embedding_data: /home/c/yuqyan/code/ETHAIM/ETHAIM/embedding_query2product.parquet
   data_splits: ./data/splits
+  test_split: ./data/splits/test.parquet
   output_dir: ./models

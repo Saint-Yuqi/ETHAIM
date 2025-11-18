@@ -9,16 +9,25 @@ from omegaconf import DictConfig
 from sentence_transformers import SentenceTransformer, losses, evaluation, util
 from torch.utils.data import DataLoader
 
+# Add wandb import
+try:
+    import wandb
+    WANDB_AVAILABLE = True
+except ImportError:
+    WANDB_AVAILABLE = False
+    print("Warning: wandb not available. Install with: pip install wandb")
+
 from src.data.dataset import load_train_eval_examples, load_test_examples
 
 
 class BiencoderEvaluator:
     """Custom evaluator for biencoder retrieval evaluation during training."""
 
-    def __init__(self, eval_examples, name="val", show_progress_bar=True):
+    def __init__(self, eval_examples, name="val", show_progress_bar=True, use_wandb=True):
         self.eval_examples = eval_examples
         self.name = name
         self.show_progress_bar = show_progress_bar
+        self.use_wandb = use_wandb and WANDB_AVAILABLE
 
         # For training evaluation, we'll use a simplified approach:
         # Randomly select "correct" products since we don't have selection labels in InputExamples
@@ -78,7 +87,11 @@ class BiencoderEvaluator:
         mrr = sum(1.0 / rank for rank in ranks) / len(ranks) if ranks else 0.0
         hit_at_10 = sum(hits_at_10) / len(hits_at_10) if hits_at_10 else 0.0
 
+        # 返回sentence-transformers期望的格式
+        # save_best_model通常基于"eval_"开头的metric
         metrics = {
+            "eval_mrr": mrr,  # 主要metric用于save_best_model
+            "eval_hit@10": hit_at_10,
             f"{self.name}_mrr": mrr,
             f"{self.name}_hit@10": hit_at_10,
         }
@@ -86,7 +99,20 @@ class BiencoderEvaluator:
         if self.show_progress_bar:
             print(f"  {self.name}_mrr: {mrr:.4f}, {self.name}_hit@10: {hit_at_10:.4f}")
 
-        return metrics
+        # Log to wandb if available
+        if self.use_wandb and WANDB_AVAILABLE:
+            log_data = {
+                f"{self.name}_mrr": mrr,
+                f"{self.name}_hit@10": hit_at_10,
+                "epoch": epoch,
+                "steps": steps,
+            }
+            wandb.log(log_data)
+
+        # For sentence-transformers' save_best_model, return single float value
+        # The model will be saved when this value is HIGHEST
+        # We return MRR as the primary metric
+        return mrr
 
 
 def create_validation_evaluator(cfg, eval_examples):
@@ -154,6 +180,26 @@ def set_seed(seed: int) -> None:
 def main(cfg: DictConfig) -> None:
     set_seed(cfg.seed)
 
+    # Initialize wandb
+    if WANDB_AVAILABLE:
+        wandb.init(
+            project="ETHAIM",
+            entity="yangyuqi2020-uzh",
+            name=f"e5-finetune-{cfg.seed}",
+            config={
+                "model_name": cfg.model.base_model_name,
+                "epochs": cfg.train.num_epochs,
+                "batch_size": cfg.dataset.batching.train_batch_size,
+                "learning_rate": "default",  # sentence-transformers uses default
+                "warmup_ratio": cfg.train.warmup_ratio,
+                "seed": cfg.seed,
+                "dataset": "embedding_query2product",
+            }
+        )
+        print(f"Wandb initialized: {wandb.run.name}")
+    else:
+        print("Wandb not available, skipping logging")
+
     print("Loading training and validation data...")
     train_examples, eval_examples = load_train_eval_examples(cfg)
 
@@ -196,16 +242,37 @@ def main(cfg: DictConfig) -> None:
         train_objectives=[(train_dataloader, train_loss)],
         evaluator=val_evaluator,
         epochs=cfg.train.num_epochs,
+        evaluation_steps=len(train_dataloader),  # Evaluate after each epoch
         warmup_steps=warmup_steps,
         output_path=output_path,
         show_progress_bar=True,
-        save_best_model=True,  # Save best model based on validation performance
+        save_best_model=True,  # Save best model based on evaluator return value (MRR)
+        checkpoint_save_steps=500,  # Also save periodic checkpoints
+        checkpoint_save_total_limit=3,  # Keep only 3 most recent checkpoints
     )
 
     print(f"\nTraining finished. Model saved to {output_path}")
 
+    # 额外保存最终模型作为backup
+    final_model_path = f"{output_path}/final_model"
+    model.save(final_model_path)
+    print(f"Final model also saved to {final_model_path}")
+
     # Final evaluation on test set
-    evaluate_on_test_set(cfg, model)
+    test_results = evaluate_on_test_set(cfg, model)
+
+    # Log final test results to wandb
+    if WANDB_AVAILABLE and test_results:
+        wandb.log({
+            "final_test_mrr": test_results.get("test_mrr", 0),
+            "final_test_hit@10": test_results.get("test_hit@10", 0),
+            "final_base_mrr": test_results.get("base_mrr", 0),
+            "final_base_hit@10": test_results.get("base_hit@10", 0),
+        })
+
+    # Finish wandb run
+    if WANDB_AVAILABLE:
+        wandb.finish()
 
 
 if __name__ == "__main__":

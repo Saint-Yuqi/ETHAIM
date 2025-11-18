@@ -133,35 +133,52 @@ After splitting, verify no query leakage:
 python verify_split.py
 ```
 
-### 2. Training with Validation Monitoring
+### 2. Training with Validation Monitoring & Wandb Logging
 
-**New integrated workflow**: Training now includes validation monitoring and final test evaluation.
+**New integrated workflow**: Training now includes validation monitoring, wandb logging, and final test evaluation.
 
 ```bash
+# Optional: Setup wandb first
+bash setup_wandb.sh
+
+# Start training
 python src/train_e5_contrastive.py
 ```
 
 **What happens during training:**
-- ✅ **Validation monitoring**: Every epoch evaluates on validation set using NDCG@10, MAP@10, etc.
+- ✅ **Validation monitoring**: Every epoch evaluates on validation set (MRR, Hit@10)
+- ✅ **Wandb logging**: All metrics automatically logged to wandb
 - ✅ **Best model saving**: Automatically saves the best performing model on validation set
 - ✅ **Final test evaluation**: After training completes, automatically evaluates on test set
 
 **Console output during training:**
 ```
-Epoch: 1/3 | Loss: 0.25 | val_ndcg@10: 0.1234 | val_map@10: 0.0567
-Epoch: 2/3 | Loss: 0.18 | val_ndcg@10: 0.1456 | val_map@10: 0.0678
-Epoch: 3/3 | Loss: 0.15 | val_ndcg@10: 0.1567 | val_map@10: 0.0789
+Wandb initialized: e5-finetune-42
+
+Epoch: 1/2 | Loss: 0.25 | val_mrr: 0.1234 | val_hit@10: 0.0567
+Epoch: 2/2 | Loss: 0.18 | val_mrr: 0.1456 | val_hit@10: 0.0678
 
 ==================================================
 FINAL EVALUATION ON TEST SET
 ==================================================
 
 Test Set Results:
-ndcg@10: 0.1567
-map@10: 0.0789
-precision@10: 0.0345
-recall@10: 0.1234
+[Base] avg_rank_best = 45.67, Hit@K = 0.1234
+[Finetuned] avg_rank_best = 23.45, Hit@K = 0.2345
+Improvement: rank ↓22.22, hit ↑0.1111
 ```
+
+### Wandb Dashboard
+
+**Project**: ETHAIM (entity: yangyuqi2020-uzh)
+
+**Logged metrics**:
+- Training loss (automatic)
+- Validation MRR & Hit@10 (per epoch)
+- Final test results (at end)
+- Model configuration & hyperparameters
+
+**Dashboard URL**: https://wandb.ai/yangyuqi2020-uzh/ETHAIM
 
 ### 3. Legacy Evaluation Scripts (Optional)
 
