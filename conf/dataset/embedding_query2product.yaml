@@ -16,7 +16,7 @@ fields:
 sampling:
   min_selects: 1
   min_impressions: 1
-  max_rows: ~  # 使用全部过滤后的数据（773万行）
+  max_rows: ~  # Use all filtered data (7.7M rows)
 
 split:
   method: "predefined"  # "random" or "predefined"
@@ -37,7 +37,7 @@ split:
   output_dir: ${paths.data_splits}
 
 batching:
-  train_batch_size: 384    # 从256增加到384，约50%增加
-  eval_batch_size: 512     # 评估时可以用更大的batch
-  max_query_length: 32     # query通常较短，保持32
-  max_product_length: 64    # product描述保持64
+  train_batch_size: 384    # Increased from 256 to 384 (~50% increase)
+  eval_batch_size: 512     # Can use larger batch for evaluation
+  max_query_length: 32     # Queries are usually short, keep at 32
+  max_product_length: 64    # Product descriptions stay at 64

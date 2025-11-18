@@ -87,10 +87,10 @@ class BiencoderEvaluator:
         mrr = sum(1.0 / rank for rank in ranks) / len(ranks) if ranks else 0.0
         hit_at_10 = sum(hits_at_10) / len(hits_at_10) if hits_at_10 else 0.0
 
-        # 返回sentence-transformers期望的格式
-        # save_best_model通常基于"eval_"开头的metric
+        # Return metrics in format expected by sentence-transformers
+        # save_best_model typically uses metrics starting with "eval_"
         metrics = {
-            "eval_mrr": mrr,  # 主要metric用于save_best_model
+            "eval_mrr": mrr,  # Primary metric for save_best_model
             "eval_hit@10": hit_at_10,
             f"{self.name}_mrr": mrr,
             f"{self.name}_hit@10": hit_at_10,
@@ -240,7 +240,7 @@ def main(cfg: DictConfig) -> None:
 
     model.fit(
         train_objectives=[(train_dataloader, train_loss)],
-        evaluator=[val_evaluator],  # 传递evaluator列表
+        evaluator=[val_evaluator],  # Pass evaluator as list
         epochs=cfg.train.num_epochs,
         evaluation_steps=len(train_dataloader),  # Evaluate after each epoch
         warmup_steps=warmup_steps,
@@ -251,7 +251,7 @@ def main(cfg: DictConfig) -> None:
 
     print(f"\nTraining finished. Model saved to {output_path}")
 
-    # 额外保存最终模型作为backup
+    # Save final model as backup
     final_model_path = f"{output_path}/final_model"
     model.save(final_model_path)
     print(f"Final model also saved to {final_model_path}")

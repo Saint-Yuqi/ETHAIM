@@ -1,6 +1,6 @@
-num_epochs: 2  # 从1增加到2，但通常2-3个epochs就够了
+num_epochs: 2  # Increased from 1 to 2, usually 2-3 epochs are sufficient
 warmup_ratio: 0.1
-num_workers: 16  # 128核心系统，设置16个workers 
+num_workers: 16  # 128-core system, set to 16 workers 
 device: "cuda"
 
 output:
