@@ -109,10 +109,8 @@ class BiencoderEvaluator:
             }
             wandb.log(log_data)
 
-        # For sentence-transformers' save_best_model, return single float value
-        # The model will be saved when this value is HIGHEST
-        # We return MRR as the primary metric
-        return mrr
+        # Return metrics dictionary for SequentialEvaluator compatibility
+        return metrics
 
 
 def create_validation_evaluator(cfg, eval_examples):
@@ -238,15 +236,19 @@ def main(cfg: DictConfig) -> None:
     print(f"Output path: {output_path}")
     print("="*50)
 
+    # Wrap single evaluator in list for SequentialEvaluator
+    from sentence_transformers.evaluation import SequentialEvaluator
+    evaluator = SequentialEvaluator([val_evaluator])
+
     model.fit(
         train_objectives=[(train_dataloader, train_loss)],
-        evaluator=[val_evaluator],  # Pass evaluator as list
+        evaluator=evaluator,
         epochs=cfg.train.num_epochs,
         evaluation_steps=len(train_dataloader),  # Evaluate after each epoch
         warmup_steps=warmup_steps,
         output_path=output_path,
         show_progress_bar=True,
-        save_best_model=True,  # Save best model based on evaluator return value (MRR)
+        save_best_model=True,  # Save best model based on evaluator metrics
     )
 
     print(f"\nTraining finished. Model saved to {output_path}")
